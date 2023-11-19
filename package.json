@@ -1,0 +1,22 @@
+{
+  "name": "miaosha",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx ./src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dayjs": "^1.11.10",
+    "puppeteer": "^21.5.2",
+    "selenium-webdriver": "^4.15.0"
+  },
+  "devDependencies": {
+    "@types/selenium-webdriver": "^4.1.20",
+    "tsx": "4.1.4"
+  }
+}
