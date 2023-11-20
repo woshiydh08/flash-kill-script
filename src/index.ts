@@ -1,6 +1,9 @@
 import webdriver from 'selenium-webdriver'
 import dayjs from 'dayjs'
 import { assert, sleep, utils } from './utils'
+import duration from 'dayjs/plugin/duration' // 引入 duration 插件
+
+dayjs.extend(duration)
 
 const { By } = webdriver
 
@@ -8,17 +11,9 @@ class CInfo {
   username!: string
   password!: string
   url!: string
-  start_time: any
-  itemopts!: {}
+  start_time!: string
+  itemopts!: Record<string, string>
   itemCarts: string[] = []
-  constructor() {
-    // this.username = ''
-    // this.password = ''
-    // this.url = '' // 购买物品的 url
-    // this.itemopts = {} // 购买物品时需要选中的选项
-    // this.itemCarts = [] // 结算需要勾选的物品
-    // this.start_time = utils.now() // 开抢时间
-  }
 }
 
 class Test_TbBot {
@@ -29,10 +24,6 @@ class Test_TbBot {
 
   constructor() {
     this.browser = new webdriver.Builder().forBrowser('chrome').build()
-    // // 最大化浏览器
-    // this.browser.manage().window().maximize()
-
-    // this.browser.get('https://www.taobao.com')
     this.info = this.readInfo()
   }
 
@@ -40,15 +31,15 @@ class Test_TbBot {
     return {
       username: '',
       password: '',
-      url: 'https://detail.tmall.com/item.htm?id=535642408486', // 购买物品的 url
+      url: 'https://detail.tmall.com/item.htm?id=670589023950', // 购买物品的 url
       itemopts: {
         尺寸: '150cmx200cm',
         颜色分类: '浅山茶萌萌皇冠兔',
-        数量: '3',
+        数量: '1',
       }, // 购买物品时需要选中的选项
 
       itemCarts: ['午休办公室午睡毯'], // 结算需要勾选的物品
-      start_time: '2024-03-03 10:50:00', // 开抢时间
+      start_time: '2023-11-20 23:00:00', // 开抢时间
     }
   }
 
@@ -61,12 +52,7 @@ class Test_TbBot {
     // utils.writeFile(utils.getDesktop(`tb-${utils.now()}-${msg}.log`), this.browser.getPageSource());
   }
 
-  async click(
-    ele: webdriver.ThenableWebDriver,
-    tips: string,
-    value: string,
-    cnt = 1
-  ) {
+  async click(ele: webdriver.WebElement, tips: string, value: string, cnt = 1) {
     await sleep(100)
     let isOk = false
     while (cnt > 0) {
@@ -90,7 +76,7 @@ class Test_TbBot {
   }
 
   async clickWithFresh(
-    ele: webdriver.ThenableWebDriver,
+    ele: webdriver.WebElement,
     tips: string,
     value: string,
     cnt = 1
@@ -155,14 +141,15 @@ class Test_TbBot {
   }
 
   // 选择购物车商品
-  async selectCart(orderEle: any, name: string | any[]) {
+  async selectCart(orderEle: webdriver.WebElement, name: string | any[]) {
     // 匹配超链接文字
     const aEle = await this.safeFind(
       orderEle,
       ".//div[@class='item-basic-info']//a"
     )
-    if (name.includes(aEle?.text)) {
-      console.log(`--- 匹配成功, ${name} -> ${aEle?.text}\n`)
+    const str = (await aEle?.getText()) as string
+    if (name.includes(str)) {
+      console.log(`--- 匹配成功, ${name} -> ${str}\n`)
       const inputEle = await this.safeFind(
         orderEle,
         ".//input[@class='J_CheckBoxItem']"
@@ -170,7 +157,7 @@ class Test_TbBot {
 
       const parentEle = await this.safeFind(inputEle, '..') // 这个才是勾选项
       await parentEle?.click()
-      console.log(`--- 勾选成功: ${aEle?.text || ''}\n`)
+      console.log(`--- 勾选成功: ${str || ''}\n`)
       return true
     } else {
       return false
@@ -195,46 +182,46 @@ class Test_TbBot {
   }
 
   // 打开购物车
-  async openCart() {
-    // 打开购物车列表页面
-    const cartUrl = 'https://cart.taobao.com/cart.htm'
-    await this.openUrl(cartUrl)
-    await sleep(1000)
+  // async openCart() {
+  //   // 打开购物车列表页面
+  //   const cartUrl = 'https://cart.taobao.com/cart.htm'
+  //   await this.openUrl(cartUrl)
+  //   await sleep(1000)
 
-    // 勾选目的商品
-    for (const itemCart of this.info.itemCarts) {
-      const orderEleArr = await this.safeFinds(
-        this.browser,
-        ".//div[@id='J_OrderList']//div[@class='order-content']"
-      )
-      for (const orderEle of orderEleArr) {
-        const isOk = await this.selectCart(orderEle, itemCart)
-        if (isOk) {
-          break
-        }
-      }
-    }
+  //   // 勾选目的商品
+  //   for (const itemCart of this.info.itemCarts) {
+  //     const orderEleArr = await this.safeFinds(
+  //       this.browser,
+  //       ".//div[@id='J_OrderList']//div[@class='order-content']"
+  //     )
+  //     for (const orderEle of orderEleArr) {
+  //       const isOk = await this.selectCart(orderEle, itemCart)
+  //       if (isOk) {
+  //         break
+  //       }
+  //     }
+  //   }
 
-    // 结算
-    await sleep(500)
-    await this.click(
-      this.browser,
-      '结算',
-      "//div[@class='float-bar-right']//div[@class='btn-area']//a[@class='submit-btn']"
-    )
+  //   // 结算
+  //   await sleep(500)
+  //   await this.click(
+  //     this.browser,
+  //     '结算',
+  //     "//div[@class='float-bar-right']//div[@class='btn-area']//a[@class='submit-btn']"
+  //   )
 
-    // 提交订单
-    await sleep(1000)
-    const isOk = await this.clickWithFresh(
-      this.browser,
-      '提交订单',
-      "//div[@class='submitOrder-container']//a[contains(text(), '提交订单')]",
-      3
-    )
+  //   // 提交订单
+  //   await sleep(1000)
+  //   const isOk = await this.clickWithFresh(
+  //     this.browser,
+  //     '提交订单',
+  //     "//div[@class='submitOrder-container']//a[contains(text(), '提交订单')]",
+  //     3
+  //   )
 
-    // 通知
-    await this.notify(isOk)
-  }
+  //   // 通知
+  //   await this.notify(isOk)
+  // }
 
   // 飞书通知
   async notify(isOk: boolean) {
@@ -251,26 +238,33 @@ class Test_TbBot {
   }
 
   async startCheck() {
-    function restSec(this: any) {
-      const ts01 = utils.nowTs()
+    const restSec = () => {
+      const endTime = utils.nowTs()
       // const ts02 = utils.dayjs({
       //   tStr: this.info.start_time,
       //   fmt: '%Y%m%d_%H%M%S',
       // })
-      const ts02 = dayjs(this.info.start_time).valueOf()
-      return ts02 - ts01
+      const startTime = dayjs(this.info.start_time)
+      const diff = dayjs.duration(startTime.diff(endTime))
+      return diff
     }
 
     let cnt = 0
-    let sec = restSec()
-    while (sec > 0) {
+    let diff = restSec()
+
+
+    while (diff.asSeconds() > 0) {
+
+      // 使用 duration 插件将秒数转换为时分秒
+      const duration = dayjs.duration(diff.asSeconds(), 'seconds')
+      const formattedTime = `${duration.hours()} 小时 ${duration.minutes()} 分钟 ${duration.seconds()} 秒`
       console.log(
-        `--- 还未到时间: ${this.info.start_time}, 剩余: ${sec} 秒, 1 秒后再检测`
+        `--- 还未到时间: ${this.info.start_time}, 剩余: ${formattedTime}, 1 秒后再检测`
       )
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       cnt++
-      sec = restSec()
+      diff = restSec()
       if (cnt % 60 === 0) {
         // 一分钟刷新一下浏览器
         console.log('--- 刷新等待 3 秒, 保持登录状态')
@@ -283,7 +277,7 @@ class Test_TbBot {
     console.log(`--- 已到达时间: ${this.info.start_time}`)
   }
 
-  async safeFind(ele: webdriver.ThenableWebDriver, value: string) {
+  async safeFind(ele: webdriver.WebElement, value: string) {
     try {
       // await new Promise(resolve => setTimeout(resolve, 10)); // 如果需要延迟，可以取消注释此行
       return await ele.findElement(By.xpath(value))
@@ -293,7 +287,7 @@ class Test_TbBot {
     }
   }
 
-  async safeFinds(ele: webdriver.ThenableWebDriver, value: string) {
+  async safeFinds(ele: webdriver.WebElement, value: string) {
     try {
       // await new Promise(resolve => setTimeout(resolve, 10)); // 如果需要延迟，可以取消注释此行
       return await ele.findElements(By.xpath(value))
@@ -308,7 +302,7 @@ class Test_TbBot {
     // 检查逻辑...
   }
 
-  async select_opt(skuEle: any, name: string, value: unknown) {
+  async select_opt(skuEle: webdriver.WebElement, name: string, value: string) {
     const dlEleArr = await this.safeFinds(skuEle, `.//dl`)
     assert(dlEleArr !== null, `--- 找不到 opt dl 列表`)
 
@@ -326,15 +320,13 @@ class Test_TbBot {
         // 特殊判断
         const inputEle = await this.safeFind(dlEle, `.//dd//input`)
         assert(inputEle !== null, `--- 找不到 数量`)
-        inputEle.clear()
+        inputEle?.clear()
         // inputEle.sendKeys(value.toString()); // 清空时会自动变为 1, 需要模拟慢慢点击
         await this.setNum(dlEle, Math.abs(parseInt(value)))
         console.log(`--- 数量 设置为: ${value}`)
       } else {
-        const aEleArr = await this.safeFinds(
-          dlEle,
-          `.//dd//li//a[@role='button']`
-        )
+        const aEleArr =
+          (await this.safeFinds(dlEle, `.//dd//li//a[@role='button']`)) || []
         let isFindItem = false
         for (const aEle of aEleArr) {
           if (aEle.text.includes(value)) {
@@ -381,7 +373,7 @@ class Test_TbBot {
     assert(addEle !== null, '--- 找不到 增加数量 按钮')
 
     for (let i = 0; i < num - 1; i++) {
-      await addEle.click()
+      await addEle?.click()
       // 可能需要一些延迟来确保点击有效
       await new Promise((resolve) => setTimeout(resolve, 1000)) // 等待 1 秒钟
     }
@@ -454,7 +446,7 @@ class Test_TbBot {
     )
 
     // 通知
-    await this.notify(isOk)
+    // await this.notify(isOk)
   }
 
   // 测试购买并提交订单
@@ -470,11 +462,11 @@ class Test_TbBot {
 
   // 测试购物车结算
   async test_cart() {
-    this.checkInfo(this.info)
-    await this.openUrl('https://www.taobao.com')
-    await this.tryLogin()
-    await this.startCheck()
-    await this.openCart()
+    // this.checkInfo(this.info)
+    // await this.openUrl('https://www.taobao.com')
+    // await this.tryLogin()
+    // await this.startCheck()
+    // await this.openCart()
 
     const aaa = await utils.inputStr('--- wolegequ') // 要阻塞住, 不然进程会马上关闭
   }

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -17,13 +19,13 @@ export const utils = {
   },
   nowTs: () => {
     // Implement your logic for getting current time in a similar way in Node.js
-    return Date.now()
+    return dayjs()
   },
 
   inputStr: (prompt) => {
     return new Promise((resolve) => {
       // rl.question(prompt, (answer) => {
-        resolve(prompt)
+      resolve(prompt)
       // })
     })
   },
