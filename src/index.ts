@@ -29,8 +29,7 @@ class Test_TbBot {
     }
 
     ins.itemCarts = [
-      '20只袜子男士春秋薄款浅口',
-      // "魔术贴条子母粘贴勾面",
+      '【买20只送20只】袜子男士短袜船袜春秋薄款浅口低帮韩版潮学生袜',
     ]
     return ins
   }
@@ -62,6 +61,9 @@ class Test_TbBot {
           break
         }
       } catch (ex) {
+
+        console.log('🌊 ~ 点击异常:', ex)
+
         console.log(`--- 找不到按钮: ${tips}, value: ${value}, 0.5s 后再次尝试`)
         await this.sleep(500)
       } finally {
@@ -174,13 +176,17 @@ class Test_TbBot {
     await this.openUrl(cartUrl)
     await this.sleep(1000)
 
+    // 勾选目的商品
     for (const itemCart of this.info.itemCarts) {
       const orderEleArr = await this.safeFinds(
         this.browser,
         ".//div[@id='J_OrderList']//div[@class='order-content']"
       )
 
-      console.log("🌊 ~ file: index.ts:182 ~ Test_TbBot ~ openCart ~ orderEleArr:", orderEleArr)
+      console.log(
+        '🌊 ~ file: index.ts:182 ~ Test_TbBot ~ openCart ~ orderEleArr:',
+        orderEleArr
+      )
 
       for (const orderEle of orderEleArr || []) {
         const isOk = await this.selectCart(orderEle, itemCart)
@@ -191,7 +197,7 @@ class Test_TbBot {
     }
 
     await this.sleep(500)
-    await this.click(
+    const clickRes = await this.click(
       this.browser,
       '结算',
       "//div[@class='float-bar-right']//div[@class='btn-area']//a[@class='submit-btn']"
@@ -251,7 +257,7 @@ class Test_TbBot {
     try {
       return await ele.findElements(By.xpath(value))
     } catch (ex) {
-      console.log("🌊 ~ file: index.ts:254 ~ Test_TbBot ~ ex:", ex)
+      console.log('🌊 ~ file: index.ts:254 ~ Test_TbBot ~ ex:', ex)
       return null
     }
   }
@@ -440,4 +446,4 @@ class Test_TbBot {
 
 const ins = new Test_TbBot()
 // ins.test_buy()
-ins.test_cart();
+ins.test_cart()

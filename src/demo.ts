@@ -32,18 +32,23 @@ class Test_TbBot {
   async openCart() {
     const cartUrl = 'https://www.baidu.com'
     await this.openUrl(cartUrl)
+
+    // 这意味着等待页面加载完成并找到 <body> 元素。这样，当 <body> 元素出现时，driver.wait() 就会结束等待，然后继续执行后续的操作。
+    await this.browser.wait(until.elementLocated(By.xpath('//body')), 10000) // 最长等待10秒
+    console.log('加载完成')
+
     await this.sleep(1000)
 
     const orderEleArr = await this.safeFinds(
       this.browser,
       ".//span[@class='title-content-title']"
     )
-    // const firstEle = orderEleArr?.[0] || null
 
     orderEleArr?.forEach(async (ele) => {
       const text = await ele?.getText()
       console.log('Element Text:', text)
     })
+
     // 进行操作或其他操作
     // 例如打印元素文本
     // const text = await firstEle?.getText()
